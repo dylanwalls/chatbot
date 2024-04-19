@@ -34,7 +34,7 @@ async function addUser(username, email, passwordHash) {
         .input('username', sql.NVarChar, username)
         .input('email', sql.NVarChar, email)
         .input('passwordHash', sql.NVarChar, passwordHash)
-        .query('INSERT INTO Users (Username, Email, PasswordHash) VALUES (@username, @email, @passwordHash)');
+        .query('INSERT INTO ChatUsers (Username, Email, PasswordHash) VALUES (@username, @email, @passwordHash)');
     return result.recordset;
 }
 
@@ -42,14 +42,14 @@ async function getUserByEmail(email) {
     const pool = await getConnection();
     const result = await pool.request()
         .input('email', sql.NVarChar, email)
-        .query('SELECT * FROM Users WHERE Email = @email');
+        .query('SELECT * FROM ChatUsers WHERE Email = @email');
     return result.recordset[0]; // Assuming email is unique
 }
 
 async function startConversation() {
     const pool = await getConnection();
     const result = await pool.request()
-        .query('INSERT INTO Conversations DEFAULT VALUES; SELECT SCOPE_IDENTITY() AS ConversationID;');
+        .query('INSERT INTO ChatConversations DEFAULT VALUES; SELECT SCOPE_IDENTITY() AS ConversationID;');
     return result.recordset[0].ConversationID; // Returns the new conversation ID
 }
 
@@ -60,7 +60,7 @@ async function addMessage(conversationId, userId, content, role) {
         .input('userId', sql.Int, userId)
         .input('content', sql.NVarChar(sql.MAX), content)
         .input('role', sql.NVarChar, role)
-        .query('INSERT INTO Messages (ConversationID, UserID, Content, Role) VALUES (@conversationId, @userId, @content, @role)');
+        .query('INSERT INTO ChatMessages (ConversationID, UserID, Content, Role) VALUES (@conversationId, @userId, @content, @role)');
     return result.recordset;
 }
 
@@ -68,14 +68,14 @@ async function resetConversation(conversationId) {
     const pool = await getConnection();
     await pool.request()
         .input('conversationId', sql.Int, conversationId)
-        .query('DELETE FROM Messages WHERE ConversationID = @conversationId');
+        .query('DELETE FROM ChatMessages WHERE ConversationID = @conversationId');
 }
 
 async function fetchConversationHistory(conversationId) {
     const pool = await getConnection();
     const result = await pool.request()
         .input('conversationId', sql.Int, conversationId)
-        .query('SELECT * FROM Messages WHERE ConversationID = @conversationId ORDER BY SentAt');
+        .query('SELECT * FROM ChatMessages WHERE ConversationID = @conversationId ORDER BY SentAt');
     return result.recordset;
 }
 
