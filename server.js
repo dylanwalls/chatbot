@@ -13,18 +13,26 @@ app.listen(PORT, () => {
 });
 
 app.post('/webhook', async (req, res) => {
-    const { message, userId, conversationId = 'default_conversation' } = req.body;
+    const { message, userId, conversationId } = req.body;  // Removed default value for conversationId
 
-    if (message.toLowerCase() === 'reset conversation') {
+    if (message.toLowerCase() === 'reset conversation' && conversationId) {
         await db.resetConversation(conversationId); // Reset conversation in DB
         console.log(`Conversation ${conversationId} reset for user: ${userId}`);
         res.status(200).send("Conversation has been reset.");
         return;
     }
 
-    console.log(`Received message from ${userId} in ${conversationId}: ${message}`);
-    const chatResponse = await handleIncomingMessage(userId, conversationId, message);
-    res.status(200).send({ message: chatResponse });
+    let effectiveConversationId = conversationId;
+
+    // If there is no conversationId, start a new conversation
+    if (!effectiveConversationId) {
+        effectiveConversationId = await db.startConversation();
+        console.log(`Started new conversation ${effectiveConversationId} for user: ${userId}`);
+    }
+
+    console.log(`Received message from ${userId} in ${effectiveConversationId}: ${message}`);
+    const chatResponse = await handleIncomingMessage(userId, effectiveConversationId, message);
+    res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId }); // Send back the conversationId
 });
 
 async function handleIncomingMessage(userId, conversationId, userMessage) {
