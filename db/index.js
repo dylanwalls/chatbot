@@ -100,4 +100,4 @@ async function fetchConversationHistory(conversationId) {
 }
 
 
-module.exports = { getConnection, addUser, getUserByEmail, startConversation, addMessage , resetConversation, fetchConversationHistory};
+module.exports = { getConnection, userExists, conversationExists, addUser, getUserByEmail, startConversation, addMessage , resetConversation, fetchConversationHistory};
