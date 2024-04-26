@@ -49,9 +49,24 @@ async function handleIncomingMessage(userId, conversationId, userMessage) {
     return reply;
 }
 
-async function fetchOpenAIResponse(userMessage, context) {
-    const messages = context.map(m => ({ role: m.role, content: m.content }));
-    messages.push({ role: "user", content: userMessage }); // Append the latest message
+async function fetchOpenAIResponse(userMessage, conversationId) {
+    // Fetch all previous messages from the database
+    const contextMessages = await db.fetchConversationHistory(conversationId);
+
+    // Format messages for API
+    const messages = contextMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+    }));
+
+    // Append the new user message
+    messages.push({
+        role: "user",
+        content: userMessage
+    });
+
+    // Log to debug
+    console.log("Sending to OpenAI:", JSON.stringify(messages));
 
     try {
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -59,12 +74,16 @@ async function fetchOpenAIResponse(userMessage, context) {
             messages: messages
         }, {
             headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
             }
         });
+
+        // Return only the content of the latest response
         return response.data.choices[0].message.content;
     } catch (error) {
-        console.error('Error fetching response from OpenAI:', error);
+        console.error('Error fetching response from OpenAI:', error.response ? error.response.data : error);
         return "Sorry, I couldn't process that message.";
     }
 }
+
