@@ -47,14 +47,14 @@ async function conversationExists(conversationId) {
 }
 
 
-async function addUser(username, email, passwordHash) {
+async function addUser(username = NULL) {
     const pool = await getConnection();
     const result = await pool.request()
         .input('username', sql.NVarChar, username)
-        .input('email', sql.NVarChar, email)
-        .input('passwordHash', sql.NVarChar, passwordHash)
-        .query('INSERT INTO ChatUsers (Username, Email, PasswordHash) OUTPUT INSERTED.UserID VALUES (@username, @email, @passwordHash)');
-    return result.recordset[0]; // Assuming INSERTED returns the new record
+        // .input('email', sql.NVarChar, email)
+        // .input('passwordHash', sql.NVarChar, passwordHash)
+        .query('INSERT INTO ChatUsers (Username) VALUES (@username); SELECT SCOPE_IDENTITY() AS UserID;');
+    return result.recordset[0].UserID; // Assuming INSERTED returns the new record
 }
 
 
