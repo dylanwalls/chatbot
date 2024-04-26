@@ -54,7 +54,8 @@ async function addUser() {
         // .input('email', sql.NVarChar, email)
         // .input('passwordHash', sql.NVarChar, passwordHash)
         .query('INSERT INTO ChatUsers (Username) VALUES (@username); SELECT SCOPE_IDENTITY() AS UserID;');
-    return result.recordset[0].UserID; // Assuming INSERTED returns the new record
+    console.log('new userID:', UserID);
+    return UserID; // Assuming INSERTED returns the new record
 }
 
 
