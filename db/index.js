@@ -47,10 +47,10 @@ async function conversationExists(conversationId) {
 }
 
 
-async function addUser(username = NULL) {
+async function addUser() {
     const pool = await getConnection();
     const result = await pool.request()
-        .input('username', sql.NVarChar, username)
+        .input('username', sql.NVarChar, null)
         // .input('email', sql.NVarChar, email)
         // .input('passwordHash', sql.NVarChar, passwordHash)
         .query('INSERT INTO ChatUsers (Username) VALUES (@username); SELECT SCOPE_IDENTITY() AS UserID;');
