@@ -13,21 +13,16 @@ app.listen(PORT, () => {
 });
 
 app.post('/webhook', async (req, res) => {
-    const { message, userId, conversationId } = req.body;  // Removed default value for conversationId
+    const { message, userId, conversationId } = req.body;
 
     if (message.toLowerCase() === 'reset conversation' && conversationId) {
         const exists = await db.conversationExists(conversationId);
         if (!exists) {
             return res.status(400).send("Conversation does not exist.");
         }
-        await db.resetConversation(conversationId); // Reset conversation in DB
+        await db.resetConversation(conversationId);
         console.log(`Conversation ${conversationId} reset for user: ${userId}`);
         return res.status(200).send("Conversation has been reset.");
-    }
-
-    // Verify user exists before starting a new conversation
-    if (!await db.userExists(userId)) {
-        return res.status(400).send("User does not exist.");
     }
 
     let effectiveUserId = userId;
