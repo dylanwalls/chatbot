@@ -28,15 +28,35 @@ async function getConnection() {
     }
 }
 
+// Check if a user exists
+async function userExists(userId) {
+    const pool = await getConnection();
+    const result = await pool.request()
+        .input('userId', sql.Int, userId)
+        .query('SELECT COUNT(1) AS count FROM ChatUsers WHERE UserID = @userId');
+    return result.recordset[0].count > 0;
+}
+
+// Check if a conversation exists
+async function conversationExists(conversationId) {
+    const pool = await getConnection();
+    const result = await pool.request()
+        .input('conversationId', sql.Int, conversationId)
+        .query('SELECT COUNT(1) AS count FROM ChatConversations WHERE ConversationID = @conversationId');
+    return result.recordset[0].count > 0;
+}
+
+
 async function addUser(username, email, passwordHash) {
     const pool = await getConnection();
     const result = await pool.request()
         .input('username', sql.NVarChar, username)
         .input('email', sql.NVarChar, email)
         .input('passwordHash', sql.NVarChar, passwordHash)
-        .query('INSERT INTO ChatUsers (Username, Email, PasswordHash) VALUES (@username, @email, @passwordHash)');
-    return result.recordset;
+        .query('INSERT INTO ChatUsers (Username, Email, PasswordHash) OUTPUT INSERTED.UserID VALUES (@username, @email, @passwordHash)');
+    return result.recordset[0]; // Assuming INSERTED returns the new record
 }
+
 
 async function getUserByEmail(email) {
     const pool = await getConnection();

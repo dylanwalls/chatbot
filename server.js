@@ -16,23 +16,33 @@ app.post('/webhook', async (req, res) => {
     const { message, userId, conversationId } = req.body;  // Removed default value for conversationId
 
     if (message.toLowerCase() === 'reset conversation' && conversationId) {
+        const exists = await db.conversationExists(conversationId);
+        if (!exists) {
+            return res.status(400).send("Conversation does not exist.");
+        }
         await db.resetConversation(conversationId); // Reset conversation in DB
         console.log(`Conversation ${conversationId} reset for user: ${userId}`);
-        res.status(200).send("Conversation has been reset.");
-        return;
+        return res.status(200).send("Conversation has been reset.");
     }
 
-    let effectiveConversationId = conversationId;
-
-    // If there is no conversationId, start a new conversation
-    if (!effectiveConversationId) {
-        effectiveConversationId = await db.startConversation();
-        console.log(`Started new conversation ${effectiveConversationId} for user: ${userId}`);
+    // Verify user exists before starting a new conversation
+    if (!await db.userExists(userId)) {
+        return res.status(400).send("User does not exist.");
     }
 
-    console.log(`Received message from ${userId} in ${effectiveConversationId}: ${message}`);
-    const chatResponse = await handleIncomingMessage(userId, effectiveConversationId, message);
-    res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId }); // Send back the conversationId
+    let effectiveUserId = userId;
+
+    // If userId is not provided or user does not exist, create a new user
+    if (!effectiveUserId || !(await db.userExists(effectiveUserId))) {
+        const newUser = await db.addUser("defaultUsername", "defaultEmail@example.com", "defaultPasswordHash"); // Adjust as necessary
+        effectiveUserId = newUser.UserID; // Ensure your addUser function returns the new UserId
+        console.log(`Created new user with ID: ${effectiveUserId}`);
+    }
+
+    let effectiveConversationId = conversationId || await db.startConversation();
+    console.log(`Received message from ${effectiveUserId} in ${effectiveConversationId}: ${message}`);
+    const chatResponse = await handleIncomingMessage(effectiveUserId, effectiveConversationId, message);
+    res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId });
 });
 
 async function handleIncomingMessage(userId, conversationId, userMessage) {
