@@ -33,16 +33,17 @@ app.post('/webhook', async (req, res) => {
     let effectiveUserId = userId;
 
     // If userId is not provided or user does not exist, create a new user
-    if (!effectiveUserId || !(await db.userExists(effectiveUserId))) {
+    if (!userId || !(await db.userExists(userId))) {
         const newUser = await db.addUser("defaultUsername", "defaultEmail@example.com", "defaultPasswordHash"); // Adjust as necessary
         effectiveUserId = newUser.UserID; // Ensure your addUser function returns the new UserId
         console.log(`Created new user with ID: ${effectiveUserId}`);
     }
 
     let effectiveConversationId = conversationId || await db.startConversation();
+
     console.log(`Received message from ${effectiveUserId} in ${effectiveConversationId}: ${message}`);
     const chatResponse = await handleIncomingMessage(effectiveUserId, effectiveConversationId, message);
-    res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId });
+    res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId, userId: effectiveUserId });
 });
 
 async function handleIncomingMessage(userId, conversationId, userMessage) {
