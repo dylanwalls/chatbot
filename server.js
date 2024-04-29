@@ -13,7 +13,7 @@ app.listen(PORT, () => {
 });
 
 app.post('/webhook', async (req, res) => {
-    const { message, userId, conversationId } = req.body;
+    const { message, userId, username, conversationId } = req.body;
 
     if (message.toLowerCase() === 'reset conversation' && conversationId) {
         const exists = await db.conversationExists(conversationId);
@@ -29,7 +29,7 @@ app.post('/webhook', async (req, res) => {
 
     // If userId is not provided or user does not exist, create a new user
     if (!userId || !(await db.userExists(userId))) {
-        const newUser = await db.addUser(); // Adjust as necessary
+        const newUser = await db.addUser(username); // Adjust as necessary
         effectiveUserId = newUser.UserID; // Ensure your addUser function returns the new UserId
         console.log(`Created new user with ID: ${effectiveUserId}`);
     }
