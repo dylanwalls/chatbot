@@ -39,12 +39,24 @@ async function userExists(userId) {
 
 // Check if a conversation exists
 async function conversationExists(conversationId) {
+    console.log('Checking existence of conversationId:', conversationId);
+    if (typeof conversationId !== 'number' || conversationId <= 0) {
+        console.error('Invalid conversationId provided:', conversationId);
+        return false; // Assuming non-valid conversationId means non-existing
+    }
+
     const pool = await getConnection();
-    const result = await pool.request()
-        .input('conversationId', sql.Int, conversationId)
-        .query('SELECT COUNT(1) AS count FROM ChatConversations WHERE ConversationID = @conversationId');
-    return result.recordset[0].count > 0;
+    try {
+        const result = await pool.request()
+            .input('conversationId', sql.Int, conversationId)
+            .query('SELECT COUNT(1) AS count FROM ChatConversations WHERE ConversationID = @conversationId');
+        return result.recordset[0].count > 0;
+    } catch (error) {
+        console.error('Error checking if conversation exists:', error);
+        throw error; // Re-throw the error after logging for further handling upstream
+    }
 }
+
 
 
 async function addUser(username) {
