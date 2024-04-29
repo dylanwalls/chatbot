@@ -58,15 +58,20 @@ app.post('/webhook', async (req, res) => {
 });
 
 async function handleIncomingMessage(userId, conversationId, userMessage) {
+    console.log('Calling fetchConversationHistory');
     const context = await db.fetchConversationHistory(conversationId); // Fetch context from DB
+    console.log('Calling fetchOpenAIResponse');
     const reply = await fetchOpenAIResponse(userMessage, context);
+    console.log('Calling addMessage1');
     await db.addMessage(conversationId, userId, userMessage, 'user'); // Store user message in DB
+    console.log('Calling addMessage2');
     await db.addMessage(conversationId, userId, reply, 'assistant'); // Store bot reply in DB
     return reply;
 }
 
 async function fetchOpenAIResponse(userMessage, conversationId) {
     // Fetch all previous messages from the database
+    console.log('Calling fetchConversationHistory (within fetchOpenAIResponse');
     const contextMessages = await db.fetchConversationHistory(conversationId);
 
     // Format messages for API
