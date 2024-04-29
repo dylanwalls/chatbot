@@ -70,9 +70,9 @@ async function handleIncomingMessage(userId, conversationId, userMessage) {
     return reply;
 }
 
-async function fetchOpenAIResponse(userMessage, context) {
+async function fetchOpenAIResponse(userMessage, contextMessages) {
     // Fetch all previous messages from the database
-    console.log('Calling fetchConversationHistory (within fetchOpenAIResponse) and conversationId:', conversationId);
+    console.log('Calling fetchConversationHistory (within fetchOpenAIResponse) and ');
     // const contextMessages = await db.fetchConversationHistory(conversationId);
     // console.log('contextMessages:', contextMessages);
 
