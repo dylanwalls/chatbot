@@ -60,6 +60,7 @@ app.post('/webhook', async (req, res) => {
 async function handleIncomingMessage(userId, conversationId, userMessage) {
     console.log('Calling fetchConversationHistory');
     const context = await db.fetchConversationHistory(conversationId); // Fetch context from DB
+    console.log('from conversationHistory, context:', context);
     console.log('Calling fetchOpenAIResponse');
     const reply = await fetchOpenAIResponse(userMessage, context);
     console.log('Calling addMessage1');
@@ -71,8 +72,9 @@ async function handleIncomingMessage(userId, conversationId, userMessage) {
 
 async function fetchOpenAIResponse(userMessage, conversationId) {
     // Fetch all previous messages from the database
-    console.log('Calling fetchConversationHistory (within fetchOpenAIResponse');
+    console.log('Calling fetchConversationHistory (within fetchOpenAIResponse) and conversationId:', conversationId);
     const contextMessages = await db.fetchConversationHistory(conversationId);
+    console.log('contextMessages:', contextMessages);
 
     // Format messages for API
     const messages = contextMessages.map(msg => ({

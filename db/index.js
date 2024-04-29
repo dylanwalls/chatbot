@@ -106,6 +106,7 @@ async function resetConversation(conversationId) {
 }
 
 async function fetchConversationHistory(conversationId) {
+    console.log('now within fetchConversationHistory, conversationId:', conversationId);
     const pool = await getConnection();
     const result = await pool.request()
         .input('conversationId', sql.Int, conversationId)
