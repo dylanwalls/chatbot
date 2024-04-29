@@ -48,6 +48,8 @@ app.post('/webhook', async (req, res) => {
 
     console.log('Calling startConversation');
     let effectiveConversationId = conversationId || await db.startConversation();
+    console.log('effectiveUserId =', effectiveUserId);
+    console.log('effectiveConversationId =', effectiveConversationId);
 
     console.log(`Received message from ${effectiveUserId} in ${effectiveConversationId}: ${message}`);
     console.log('Calling handleIncomingMessage');
