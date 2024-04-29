@@ -15,6 +15,13 @@ app.listen(PORT, () => {
 app.post('/webhook', async (req, res) => {
     const { message, userId, username, conversationId } = req.body;
 
+    // Validate conversationId
+    if (conversationId !== undefined && (isNaN(parseInt(conversationId)) || parseInt(conversationId) <= 0)) {
+        return res.status(400).send("Invalid conversationId provided.");
+    }
+
+    console.log('Conversation ID:', conversationId, 'Type:', typeof conversationId);
+
     if (message.toLowerCase() === 'reset conversation' && conversationId) {
         const exists = await db.conversationExists(conversationId);
         if (!exists) {
