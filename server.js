@@ -6,7 +6,7 @@ const axios = require('axios');
 const db = require('./db');  // Import the database module
 const twilio = require('twilio');
 
-require('dotenv').config();
+// require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
