@@ -85,8 +85,8 @@ async function fetchOpenAIResponse(userMessage, contextMessages) {
     const messages = contextMessages.map(msg => {
         console.log(`Mapping message: ${msg.Content} with role: ${msg.Role}`);
         return {
-            role: msg.role,
-            content: msg.content
+            role: msg.Role,
+            content: msg.Content
         };
     });
 
