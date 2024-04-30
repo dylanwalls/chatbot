@@ -71,16 +71,24 @@ async function handleIncomingMessage(userId, conversationId, userMessage) {
 }
 
 async function fetchOpenAIResponse(userMessage, contextMessages) {
+    
+    if (!contextMessages || contextMessages.length === 0) {
+        console.error("No messages found in conversation history.");
+        return "No previous messages found.";
+    }
     // Fetch all previous messages from the database
     console.log('Calling fetchConversationHistory (within fetchOpenAIResponse) and ');
     // const contextMessages = await db.fetchConversationHistory(conversationId);
     // console.log('contextMessages:', contextMessages);
 
     // Format messages for API
-    const messages = contextMessages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-    }));
+    const messages = contextMessages.map(msg => {
+        console.log(`Mapping message: ${msg.Content} with role: ${msg.Role}`);
+        return {
+            role: msg.role,
+            content: msg.content
+        };
+    });
 
     // Append the new user message
     messages.push({
@@ -89,7 +97,7 @@ async function fetchOpenAIResponse(userMessage, contextMessages) {
     });
 
     // Log to debug
-    console.log("Sending to OpenAI:", JSON.stringify(messages));
+    console.log("Final message array to OpenAI:", JSON.stringify(messages));
 
     try {
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -101,6 +109,8 @@ async function fetchOpenAIResponse(userMessage, contextMessages) {
                 'Content-Type': 'application/json'
             }
         });
+
+        console.log("OpenAI response:", response.data);
 
         // Return only the content of the latest response
         return response.data.choices[0].message.content;
