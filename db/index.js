@@ -116,5 +116,49 @@ async function fetchConversationHistory(conversationId) {
     return result.recordset;
 }
 
+async function findOrCreateUserByPhone(phone) {
+    const pool = await getConnection();
+    let result = await pool.request()
+        .input('phone', sql.NVarChar, phone)
+        .query('SELECT * FROM ChatUsers WHERE Phone = @phone');
+    if (result.recordset.length === 0) {
+        // User does not exist, create new
+        result = await pool.request()
+            .input('phone', sql.NVarChar, phone)
+            .query('INSERT INTO ChatUsers (Phone) OUTPUT INSERTED.* VALUES (@phone)');
+    }
+    return result.recordset[0]; // Return the user record
+}
 
-module.exports = { getConnection, userExists, conversationExists, addUser, getUserByEmail, startConversation, addMessage , resetConversation, fetchConversationHistory};
+async function resolveActiveConversationId(userId) {
+    const pool = await getConnection();
+    
+    try {
+        // Check for an existing active conversation linked through messages
+        const activeConversationCheck = await pool.request()
+            .input('userId', sql.Int, userId)
+            .query(`
+                SELECT c.ConversationID
+                FROM ChatConversations c
+                JOIN ChatMessages m ON m.ConversationID = c.ConversationID
+                WHERE m.UserID = @userId AND c.IsActive = 1
+                GROUP BY c.ConversationID
+            `);
+
+        if (activeConversationCheck.recordset.length > 0) {
+            // Return the existing active conversation ID
+            return activeConversationCheck.recordset[0].ConversationID;
+        } else {
+            // No active conversation, start a new one
+            const newConversation = await pool.request()
+                .query('INSERT INTO ChatConversations (IsActive) OUTPUT INSERTED.ConversationID VALUES (1);');
+            return newConversation.recordset[0].ConversationID;
+        }
+    } catch (err) {
+        console.error('Failed to resolve or start conversation:', err);
+        throw err;
+    }
+}
+
+
+module.exports = { getConnection, userExists, conversationExists, addUser, getUserByEmail, startConversation, addMessage , resetConversation, fetchConversationHistory, findOrCreateUserByPhone, resolveActiveConversationId};
