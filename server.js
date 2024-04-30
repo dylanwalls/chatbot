@@ -2,14 +2,17 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
 const axios = require('axios');
 const db = require('./db');  // Import the database module
+const twilio = require('twilio');
+
 require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(bodyParser.json());
+
+// Twilio client setup
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
@@ -30,50 +33,16 @@ app.post('/webhook', async (req, res) => {
 
     console.log(`Received message from ${user.UserID} in ${conversationId}: ${message}`);
     const chatResponse = await handleIncomingMessage(user.UserID, conversationId, message);
-    res.status(200).send({message: chatResponse, conversationId: conversationId, userId: user.UserID});
+
+    client.messages.create({
+        body: chatResponse,
+        from: 'whatsapp:+14155238886',
+        to: from
+    }).then(message => console.log(message.sid))
+    .catch(error => console.error(error));
+
+    res.status(200).send('Message processed.');
 });
-
-
-//     // Validate conversationId
-//     if (conversationId !== undefined && (isNaN(parseInt(conversationId)) || parseInt(conversationId) <= 0)) {
-//         return res.status(400).send("Invalid conversationId provided.");
-//     }
-
-//     console.log('Conversation ID:', conversationId, 'Type:', typeof conversationId);
-
-//     if (message.toLowerCase() === 'reset conversation' && conversationId) {
-//         console.log('calling conversationExists');
-//         const exists = await db.conversationExists(conversationId);
-//         if (!exists) {
-//             return res.status(400).send("Conversation does not exist.");
-//         }
-//         console.log('Calling resetConversation');
-//         await db.resetConversation(conversationId);
-//         console.log(`Conversation ${conversationId} reset for user: ${userId}`);
-//         return res.status(200).send("Conversation has been reset.");
-//     }
-
-//     let effectiveUserId = userId;
-
-//     // If userId is not provided or user does not exist, create a new user
-//     console.log('Calling userExists');
-//     if (!userId || !(await db.userExists(userId))) {
-//         console.log('Calling addUser');
-//         const newUser = await db.addUser(username); // Adjust as necessary
-//         effectiveUserId = newUser.UserID; // Ensure your addUser function returns the new UserId
-//         console.log(`Created new user with ID: ${effectiveUserId}`);
-//     }
-
-//     console.log('Calling startConversation');
-//     let effectiveConversationId = conversationId || await db.startConversation();
-//     console.log('effectiveUserId =', effectiveUserId);
-//     console.log('effectiveConversationId =', effectiveConversationId);
-
-//     console.log(`Received message from ${effectiveUserId} in ${effectiveConversationId}: ${message}`);
-//     console.log('Calling handleIncomingMessage');
-//     const chatResponse = await handleIncomingMessage(effectiveUserId, effectiveConversationId, message);
-//     res.status(200).send({ message: chatResponse, conversationId: effectiveConversationId, userId: effectiveUserId });
-// });
 
 async function handleIncomingMessage(userId, conversationId, userMessage) {
     console.log('Calling fetchConversationHistory');
@@ -81,6 +50,7 @@ async function handleIncomingMessage(userId, conversationId, userMessage) {
     console.log('from conversationHistory, context:', context);
     console.log('Calling fetchOpenAIResponse');
     const reply = await fetchOpenAIResponse(userMessage, context);
+    console.log('Reply:', reply);
     console.log('Calling addMessage1');
     await db.addMessage(conversationId, userId, userMessage, 'user'); // Store user message in DB
     console.log('Calling addMessage2');
