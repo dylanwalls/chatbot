@@ -2,12 +2,13 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true }));
+
 const axios = require('axios');
 const db = require('./db');  // Import the database module
 require('dotenv').config();
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 // app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 5001;
