@@ -84,8 +84,8 @@ async function getUserByEmail(email) {
 
 async function startConversation() {
     const pool = await getConnection();
-    const result = await pool.request()
-        .query('INSERT INTO ChatConversations DEFAULT VALUES; SELECT SCOPE_IDENTITY() AS ConversationID;');
+    const query = "INSERT INTO ChatConversations (IsActive) OUTPUT INSERTED.ConversationID VALUES (1);";
+    const result = await pool.request().query(query);
     return result.recordset[0].ConversationID; // Returns the new conversation ID
 }
 
@@ -100,11 +100,13 @@ async function addMessage(conversationId, userId, content, role) {
     return result.recordset;
 }
 
+// Set conversation as inactive
 async function resetConversation(conversationId) {
     const pool = await getConnection();
+    const query = `UPDATE ChatConversations SET IsActive = 0 WHERE ConversationID = @conversationId`;
     await pool.request()
         .input('conversationId', sql.Int, conversationId)
-        .query('DELETE FROM ChatMessages WHERE ConversationID = @conversationId');
+        .query(query);
 }
 
 async function fetchConversationHistory(conversationId) {
